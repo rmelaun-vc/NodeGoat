@@ -1,4 +1,4 @@
- /*
+/*
  * Jenkinsfile that will build and do a Veracode Pipeline scan
  */
 
@@ -99,10 +99,7 @@ pipeline {
                     echo "Pipeline scan done (failures ignored, results avialable in ${WORKSPACE}/results.json)"
             }
         }
-    }
-}
-
-      stage ('Veracode scan') {
+        stage ('Veracode scan') {
             steps {
                 // zip archive for Veracode scanning.  Only include stuff we need,
                 //  aka skip things like node_modules directory
@@ -128,7 +125,6 @@ pipeline {
                     }      
             }
         }
-
         stage ('Veracode SCA') {
             steps {
                 echo 'Veracode SCA'
@@ -155,7 +151,6 @@ pipeline {
                 }
             }
         }
-
         stage ('Deploy') {
             when { expression { return (isUnix() == true) } }
             steps {
