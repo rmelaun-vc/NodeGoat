@@ -1,5 +1,5 @@
 /*
- * Jenkinsfile that will build and do a Veracode Pipeline scan
+ * Jenkinsfile that will build and do a Veracode Pipeline scan, Policy Scan and SCA scan
  */
 
 pipeline {
@@ -99,7 +99,7 @@ pipeline {
                     echo "Pipeline scan done (failures ignored, results avialable in ${WORKSPACE}/results.json)"
             }
         }
-    }
+        
         stage ('Veracode scan') {
             steps {
                 // zip archive for Veracode scanning.  Only include stuff we need,
