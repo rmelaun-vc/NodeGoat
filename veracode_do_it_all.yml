@@ -61,9 +61,7 @@ steps:
     failTheBuildIfVeracodeScanDidNotInitiate: false
     scanStatusCheckInterval: '60'
     importResults: true
-    failBuildOnPolicyFail: false: VeracodeAPI
-    createProfile: true
-    importResults: true
+    failBuildOnPolicyFail: false
 
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact: drop'
