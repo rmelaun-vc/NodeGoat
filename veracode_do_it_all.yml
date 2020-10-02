@@ -48,10 +48,7 @@ steps:
   continueOnError: true
   condition: always()
 
-- task: Veracode.veracode-vsts-build-extension.veracode-scanner-task.Veracode@3
-  displayName: 'Upload and scan: $(build.artifactstagingdirectory)'
-  inputs:
-    - task: Veracode@3
+- task: Veracode@3
   inputs:
     ConnectionDetailsSelection: 'Credentials'
     apiId: '141311692d9605d1ab59b31ec7a4e4bb'
