@@ -1,0 +1,62 @@
+pool:
+  name: Azure Pipelines
+  demands:
+  - maven
+  - java
+
+#Your build pipeline references an undefined variable named ‘Parameters.mavenPOMFile’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+variables:
+  VERACODE_API_ID: '7c76d5410cdefc6257521fbfe7482e22'
+  VERACODE_API_KEY: '78381b6cb22f5ed347d8200a218e73d3a67a6c479be6d36803126e8f11280c45b529d36af7e27ac4d4a5d0c130247d263361aa9a28e9f855a53563578297303f'
+
+steps:
+- task: Maven@3
+  displayName: 'Maven pom.xml'
+  inputs:
+    mavenPomFile: '$(Parameters.mavenPOMFile)'
+    publishJUnitResults: false
+
+- task: CopyFiles@2
+  displayName: 'Copy Files to: $(build.artifactstagingdirectory)'
+  inputs:
+    SourceFolder: '$(system.defaultworkingdirectory)'
+    Contents: |
+     **/*.jar
+     **/*.war
+    TargetFolder: '$(build.artifactstagingdirectory)'
+  condition: succeededOrFailed()
+
+- script: 'curl -O -L https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip'
+  displayName: 'Download Veracode Pipeline Scan'
+
+- task: ExtractFiles@1
+  displayName: 'Extract Veracode Pipeline Scan files '
+  inputs:
+    archiveFilePatterns: 'pipeline-scan-LATEST.zip'
+    destinationFolder: '$(build.artifactstagingdirectory)'
+    cleanDestinationFolder: false
+
+- script: |
+   chmod 777 $(build.artifactstagingdirectory)/target/verademo.war
+   
+   java -Dpipeline.debug=true -jar $(build.artifactstagingdirectory)/pipeline-scan.jar --veracode_api_id "$(VERACODE_API_ID)" --veracode_api_key "$(VERACODE_API_KEY)" --file "$(build.artifactstagingdirectory)/target/verademo.war" --fail_on_severity="Very High, High,Medium" --fail_on_cwe="80" --json_output="true" --json_output_file="veracodepipelineresults.json"
+  displayName: 'Run Veracode Pipeline Scan'
+  continueOnError: true
+
+- script: 'curl -sSL https://download.sourceclear.com/ci.sh | sh'
+  displayName: 'Run Veracode SCA Agent-based Scan'
+  continueOnError: true
+  condition: always()
+
+- task: Veracode.veracode-vsts-build-extension.veracode-scanner-task.Veracode@3
+  displayName: 'Upload and scan: $(build.artifactstagingdirectory)'
+  inputs:
+    AnalysisService: VeracodeAPI
+    createProfile: true
+    importResults: true
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: drop'
+  inputs:
+    PathtoPublish: '$(build.artifactstagingdirectory)'
+  condition: succeededOrFailed()
