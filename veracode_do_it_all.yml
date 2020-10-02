@@ -51,7 +51,20 @@ steps:
 - task: Veracode.veracode-vsts-build-extension.veracode-scanner-task.Veracode@3
   displayName: 'Upload and scan: $(build.artifactstagingdirectory)'
   inputs:
-    AnalysisService: VeracodeAPI
+    - task: Veracode@3
+  inputs:
+    ConnectionDetailsSelection: 'Credentials'
+    apiId: '141311692d9605d1ab59b31ec7a4e4bb'
+    apiKey: 'a72265a3dabc257edd25ad09f24582262397bea67aaea616fc25a1704ffb7bdc1dda62d255f8b52a9d53a4ae1177e16fab2b660688c131cc7bd8a8caebee8586'
+    veracodeAppProfile: 'NodeGoat'
+    version: '$(build.buildNumber)'
+    filepath: '$(build.artifactstagingdirectory)'
+    createSandBox: false
+    createProfile: false
+    failTheBuildIfVeracodeScanDidNotInitiate: false
+    scanStatusCheckInterval: '60'
+    importResults: true
+    failBuildOnPolicyFail: false: VeracodeAPI
     createProfile: true
     importResults: true
 
