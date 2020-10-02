@@ -16,7 +16,6 @@ steps:
 #  inputs:
 #    mavenPomFile: '$(Parameters.mavenPOMFile)'
 #    publishJUnitResults: false
--
 - task: NodeTool@0
   inputs:
     versionSpec: '6.x'
