@@ -10,11 +10,16 @@ variables:
   VERACODE_API_KEY: 'a72265a3dabc257edd25ad09f24582262397bea67aaea616fc25a1704ffb7bdc1dda62d255f8b52a9d53a4ae1177e16fab2b660688c131cc7bd8a8caebee8586'
 
 steps:
-- task: Maven@3
-  displayName: 'Maven pom.xml'
+
+#- task: Maven@3
+#  displayName: 'Maven pom.xml'
+#  inputs:
+#    mavenPomFile: '$(Parameters.mavenPOMFile)'
+#    publishJUnitResults: false
+-
+- task: NodeTool@0
   inputs:
-    mavenPomFile: '$(Parameters.mavenPOMFile)'
-    publishJUnitResults: false
+    versionSpec: '6.x'
 
 - task: CopyFiles@2
   displayName: 'Copy Files to: $(build.artifactstagingdirectory)'
