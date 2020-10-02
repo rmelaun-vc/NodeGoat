@@ -1,0 +1,68 @@
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+trigger:
+- master
+
+variables:
+  VERACODE_API_ID: '141311692d9605d1ab59b31ec7a4e4bb'
+  VERACODE_API_KEY: 'a72265a3dabc257edd25ad09f24582262397bea67aaea616fc25a1704ffb7bdc1dda62d255f8b52a9d53a4ae1177e16fab2b660688c131cc7bd8a8caebee8586'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '10.x'
+  displayName: 'Install Node.js'
+
+- script: |
+    npm install
+    npm run build
+  displayName: 'npm install and build'
+
+- script: 'curl -O -L https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip'
+  displayName: 'Download Veracode Pipeline Scan'
+
+- task: ExtractFiles@1
+  displayName: 'Extract Veracode Pipeline Scan files '
+  inputs:
+    archiveFilePatterns: 'pipeline-scan-LATEST.zip'
+    destinationFolder: '$(build.artifactstagingdirectory)'
+    cleanDestinationFolder: false
+
+- script: |
+   chmod 777 $(build.artifactstagingdirectory)/target/verademo.war
+   
+   java -Dpipeline.debug=true -jar $(build.artifactstagingdirectory)/pipeline-scan.jar --veracode_api_id "$(VERACODE_API_ID)" --veracode_api_key "$(VERACODE_API_KEY)" --file "$(build.artifactstagingdirectory)/target/verademo.war" --fail_on_severity="Very High, High,Medium" --fail_on_cwe="80" --json_output="true" --json_output_file="veracodepipelineresults.json"
+  displayName: 'Run Veracode Pipeline Scan'
+  continueOnError: true
+
+- script: 'curl -sSL https://download.sourceclear.com/ci.sh | sh'
+  displayName: 'Run Veracode SCA Agent-based Scan'
+  continueOnError: true
+  condition: always()
+
+- task: Veracode@3
+  inputs:
+    ConnectionDetailsSelection: 'Credentials'
+    apiId: '141311692d9605d1ab59b31ec7a4e4bb'
+    apiKey: 'a72265a3dabc257edd25ad09f24582262397bea67aaea616fc25a1704ffb7bdc1dda62d255f8b52a9d53a4ae1177e16fab2b660688c131cc7bd8a8caebee8586'
+    veracodeAppProfile: 'NodeGoat'
+    version: '$(build.buildNumber)'
+    filepath: '$(build.artifactstagingdirectory)'
+    createSandBox: false
+    createProfile: false
+    failTheBuildIfVeracodeScanDidNotInitiate: false
+    scanStatusCheckInterval: '60'
+    importResults: false
+    failBuildOnPolicyFail: false
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: drop'
+  inputs:
+    PathtoPublish: '$(build.artifactstagingdirectory)'
+  condition: succeededOrFailed()
